@@ -27,8 +27,9 @@ jobs:
 
       - name: Set up .npmrc
         run: |
-          echo "@trylogout:registry=https://npm.pkg.github.com/" >> .npmrc
           echo "//npm.pkg.github.com/:_authToken=dummy" >> .npmrc
+          echo "@trylogout:registry=https://npm.pkg.github.com" >> .npmrc
+          echo "always-auth=true" >> .npmrc
 
       - name: Publish Package
         env:
