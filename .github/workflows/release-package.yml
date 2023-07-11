@@ -24,14 +24,3 @@ jobs:
 
       - name: Build Package
         run: npm run build
-
-      - name: Set up .npmrc
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=dummy" >> .npmrc
-          echo "@trylogout:registry=https://npm.pkg.github.com" >> .npmrc
-          echo "always-auth=true" >> .npmrc
-
-      - name: Publish Package
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish
