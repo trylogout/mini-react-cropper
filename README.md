@@ -63,8 +63,3 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 ## License
 
 This package is open source and available under the MIT License.
-
-```
-Feel free to customize and enhance this README.md to
-best represent your React Cropper Component package.
-```
