@@ -1,6 +1,6 @@
-# React Cropper Component
+# Mini React Cropper
 
-React Cropper Component is a versatile image cropping component for React applications. It allows users to select and crop a specific area of an image, providing various customization options such as shape, border type, zooming, and more.
+Mini React Cropper is a versatile image cropping component for React applications. It allows users to select and crop a specific area of an image, providing various customization options such as shape, border type, zooming, and more.
 
 ![React Cropper Component](cropper-demo.png)
 
@@ -17,16 +17,16 @@ React Cropper Component is a versatile image cropping component for React applic
 
 ## Installation
 
-To install the React Cropper Component, use npm or yarn:
+To install the Mini React Cropper, use npm or yarn:
 
 ```shell
-npm install react-cropper-component
+npm install mini-react-cropper
 ```
 
 or
 
 ```shell
-yarn add react-cropper-component
+yarn add mini-react-cropper
 ```
 
 ## Usage
@@ -35,7 +35,7 @@ Here's a basic example demonstrating how to use the Cropper Component in your Re
 
 ```tsx
 import React from 'react';
-import CropperComponent from 'react-cropper-component';
+import CropperComponent from 'mini-react-cropper';
 
 const App = () => {
   const handleSubmit = (croppedImage) => {
@@ -46,7 +46,7 @@ const App = () => {
   return (
     <div>
       <h1>Image Cropper Demo</h1>
-      <CropperComponent image='path/to/image.jpg' onSubmit={handleSubmit} />
+      <CropperComponent image='base64image' onSubmit={handleSubmit} />
     </div>
   );
 };
@@ -64,7 +64,7 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 
 This package is open source and available under the MIT License.
 
-```kotlin
+```
 Feel free to customize and enhance this README.md to
 best represent your React Cropper Component package.
 ```
