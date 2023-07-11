@@ -15,6 +15,9 @@
     "test": "jest",
     "prepublishOnly": "npm run build"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/trylogout/mini-react-cropper.git"
