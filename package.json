@@ -1,6 +1,6 @@
 {
   "name": "mini-react-cropper",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A versatile image cropping component for React applications",
   "main": "index.ts",
   "files": [
