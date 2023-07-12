@@ -139,7 +139,7 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
 
     if (imageElement) {
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', {willReadFrequently: true, desynchronized: true});
 
       if (ctx) {
         const scale = imageElement.naturalWidth / (imageElement.width * zoomLevel);
