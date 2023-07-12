@@ -2,7 +2,7 @@
 
 Mini React Cropper is a versatile image cropping component for React applications. It allows users to select and crop a specific area of an image, providing various customization options such as shape, border type, zooming, and more.
 
-![React Cropper Component](cropper-demo.png)
+![React Cropper Component](assets/mini-cropper.png)
 
 ## Features
 
@@ -46,7 +46,7 @@ const App = () => {
   return (
     <div>
       <h1>Image Cropper Demo</h1>
-      <CropperComponent image='base64image' onSubmit={handleSubmit} />
+      <MiniCropper image='base64image' onSubmit={handleSubmit} />
     </div>
   );
 };

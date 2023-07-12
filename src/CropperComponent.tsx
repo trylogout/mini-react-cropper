@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './MiniCropperDefaultStyles.scss';
 
 type Size = {
   width: number;
   height: number;
 };
 
-interface CropperProps {
+interface MiniCropperProps {
   image: string;
   onCropAreaChange?: (croppedImage: string) => void;
   onSubmit: (croppedImage: string) => void;
@@ -24,6 +25,8 @@ interface CropperProps {
     mediaClassName?: string;
     cropAreaClassName?: string;
     buttonsClassName?: string;
+    buttonZoomInClassName?: string;
+    buttonZoomOutClassName?: string;
   };
   objectFit?:
     | '-moz-initial'
@@ -39,15 +42,15 @@ interface CropperProps {
     | 'scale-down';
 }
 
-const CropperComponent: React.FC<CropperProps> = ({
+const MiniCropper: React.FC<MiniCropperProps> = ({
   image,
   onSubmit,
   onCropAreaChange = () => {},
   onSubmitBtnText = 'Save',
   shape = 'rect',
   borderType = 'dashed',
-  borderColor = '#000',
-  dotColor = borderColor,
+  borderColor = '#873192',
+  dotColor = '#fff',
   minZoom = 0.5,
   maxZoom = 2,
   zoomSpeed = 0.1,
@@ -58,6 +61,8 @@ const CropperComponent: React.FC<CropperProps> = ({
     mediaClassName: 'cropper-media',
     cropAreaClassName: 'cropper-drag-handle',
     buttonsClassName: 'cropper-action',
+    buttonZoomInClassName: 'cropper-zoom-button cropper-zoom-in',
+    buttonZoomOutClassName: 'cropper-zoom-button cropper-zoom-out',
   },
   objectFit = 'contain',
 }) => {
@@ -321,21 +326,24 @@ const CropperComponent: React.FC<CropperProps> = ({
           }}
           onMouseDown={handleResizeStart}
         />
-      </div>
-      <div className='cropper-actions'>
         {zoomable && (
-          <>
-            <button className={classes.buttonsClassName || 'cropper-action'} onClick={handleZoomIn}>
-              Zoom In
+          <div className='cropper-zoom-buttons'>
+            <button
+              className={classes.buttonZoomInClassName || 'cropper-zoom-button cropper-zoom-in'}
+              onClick={handleZoomIn}
+            >
+              +
             </button>
             <button
-              className={classes.buttonsClassName || 'cropper-action'}
+              className={classes.buttonZoomOutClassName || 'cropper-zoom-button cropper-zoom-out'}
               onClick={handleZoomOut}
             >
-              Zoom Out
+              -
             </button>
-          </>
+          </div>
         )}
+      </div>
+      <div className='cropper-actions'>
         <button className={classes.buttonsClassName || 'cropper-action'} onClick={handleSave}>
           {onSubmitBtnText}
         </button>
@@ -344,4 +352,4 @@ const CropperComponent: React.FC<CropperProps> = ({
   );
 };
 
-export default CropperComponent;
+export default MiniCropper;
