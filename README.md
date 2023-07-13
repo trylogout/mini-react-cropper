@@ -35,7 +35,7 @@ Here's a basic example demonstrating how to use the Cropper Component in your Re
 
 ```tsx
 import React from 'react';
-import CropperComponent from 'mini-react-cropper';
+import MiniCropper from 'mini-react-cropper';
 
 const App = () => {
   const handleSubmit = (croppedImage) => {
