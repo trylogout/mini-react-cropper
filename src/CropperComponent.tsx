@@ -73,6 +73,7 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
     height: cropSize.height,
   });
   const [croppedImage, setCroppedImage] = useState('');
+  const [isLoading, setIsLoading] = useState(true); // Track image loading state
   const imageRef = useRef<HTMLImageElement>(null);
   const cropperContainerRef = useRef<HTMLDivElement>(null);
   const dragHandleRef = useRef<HTMLDivElement>(null);
@@ -135,37 +136,73 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
   }, []);
 
   useEffect(() => {
+    setIsLoading(true); // Set loading state to true when the image prop changes
+
     const imageElement = imageRef.current;
 
     if (imageElement) {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', {willReadFrequently: true, desynchronized: true});
+      const compressImage = (sourceImage: HTMLImageElement, quality: number): Promise<Blob> =>
+        new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
 
-      if (ctx) {
-        const scale = imageElement.naturalWidth / (imageElement.width * zoomLevel);
-        const { x, y, width, height } = cropperData;
+          const scaleFactor = Math.min(1, 1000 / Math.max(sourceImage.width, sourceImage.height));
+          const targetWidth = sourceImage.width * scaleFactor;
+          const targetHeight = sourceImage.height * scaleFactor;
 
-        canvas.width = width * scale;
-        canvas.height = height * scale;
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
 
-        ctx.drawImage(
-          imageElement,
-          x * scale,
-          y * scale,
-          width * scale,
-          height * scale,
-          0,
-          0,
-          width * scale,
-          height * scale,
-        );
+          ctx?.drawImage(sourceImage, 0, 0, targetWidth, targetHeight);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              }
+            },
+            'image/jpeg',
+            quality,
+          );
+        });
 
-        const dataUrl = canvas.toDataURL();
-        onCropAreaChange(dataUrl);
-        setCroppedImage(dataUrl);
-      }
+      const renderImage = async () => {
+        const quality = calculateImageQuality(imageElement.width, imageElement.height);
+
+        if (quality === 1) {
+          // No compression needed, use the original image
+          onCropAreaChange(image);
+          setCroppedImage(image);
+        } else {
+          // Compress the image
+          const compressedBlob = await compressImage(imageElement, quality);
+          const compressedImageUrl = URL.createObjectURL(compressedBlob);
+
+          onCropAreaChange(compressedImageUrl);
+          setCroppedImage(compressedImageUrl);
+        }
+
+        setIsLoading(false); // Set loading state to false after the image has loaded
+      };
+
+      imageElement.onload = renderImage;
+
+      return () => {
+        imageElement.onload = null; // Cleanup the onload event handler
+      };
     }
-  }, [cropperData, zoomLevel]);
+  }, [image]);
+
+  const calculateImageQuality = (width: number, height: number): number => {
+    const maxDimension = Math.max(width, height);
+    let quality = 1;
+
+    if (maxDimension > 1000) {
+      const scaleFactor = maxDimension / 1000;
+      quality = 1 / scaleFactor;
+    }
+
+    return quality;
+  };
 
   const handleDragStart = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -271,14 +308,32 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
 
   return (
     <div className={classes.containerClassName || 'cropper-container'} ref={cropperContainerRef}>
-      <div className='cropper-image' style={{ position: 'relative', overflow: 'hidden' }}>
+      <div
+        className='cropper-image'
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          height: '100%',
+          width: '100%',
+        }}
+      >
+        {isLoading ? (
+          <div
+            className='cropper-skeleton-animation'
+            style={{
+              minWidth: '100%',
+              minHeight: '400px',
+              borderRadius: '8px',
+            }}
+          />
+        ) : null}
         <img
           src={image}
           alt='Crop'
           ref={imageRef}
           className={classes.mediaClassName || 'cropper-media'}
           style={{
-            display: 'block',
+            display: isLoading ? 'none' : 'block',
             maxWidth: '100%',
             maxHeight: '100%',
             top: 0,
@@ -289,43 +344,47 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
             objectFit: `${objectFit}`,
           }}
         />
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-        <div
-          className={classes.cropAreaClassName || 'cropper-drag-handle'}
-          style={{
-            position: 'absolute',
-            top: `${cropperData.y}px`,
-            left: `${cropperData.x}px`,
-            width: `${cropperData.width}px`,
-            height: `${cropperData.height}px`,
-            maxWidth: '100%',
-            maxHeight: '100%',
-            border: `1px ${borderType} ${borderColor}`,
-            pointerEvents: 'initial',
-            cursor: 'move',
-            zIndex: 2,
-            borderRadius: `${styleOptions.borderRadius}`,
-            boxShadow: '0 0 0 1600px rgba(0,0,0,0.65)' /* dark around it */,
-          }}
-          onMouseDown={handleDragStart}
-        />
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-        <div
-          className='cropper-resize-handle'
-          style={{
-            position: 'absolute',
-            top: `${styleOptions.top}`,
-            left: `${styleOptions.left}`,
-            width: '12px',
-            height: '12px',
-            cursor: 'nwse-resize',
-            backgroundColor: `${dotColor}`,
-            border: '1px solid #000',
-            borderRadius: `${styleOptions.borderRadius}`,
-            zIndex: 2,
-          }}
-          onMouseDown={handleResizeStart}
-        />
+        {isLoading ? null : (
+          <>
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+            <div
+              className={classes.cropAreaClassName || 'cropper-drag-handle'}
+              style={{
+                position: 'absolute',
+                top: `${cropperData.y}px`,
+                left: `${cropperData.x}px`,
+                width: `${cropperData.width}px`,
+                height: `${cropperData.height}px`,
+                maxWidth: '100%',
+                maxHeight: '100%',
+                border: `1px ${borderType} ${borderColor}`,
+                pointerEvents: 'initial',
+                cursor: 'move',
+                zIndex: 2,
+                borderRadius: `${styleOptions.borderRadius}`,
+                boxShadow: '0 0 0 1600px rgba(0,0,0,0.65)' /* dark around it */,
+              }}
+              onMouseDown={handleDragStart}
+            />
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+            <div
+              className='cropper-resize-handle'
+              style={{
+                position: 'absolute',
+                top: `${styleOptions.top}`,
+                left: `${styleOptions.left}`,
+                width: '12px',
+                height: '12px',
+                cursor: 'nwse-resize',
+                backgroundColor: `${dotColor}`,
+                border: '1px solid #000',
+                borderRadius: `${styleOptions.borderRadius}`,
+                zIndex: 2,
+              }}
+              onMouseDown={handleResizeStart}
+            />
+          </>
+        )}
         {zoomable && (
           <div className='cropper-zoom-buttons'>
             <button
