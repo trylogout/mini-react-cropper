@@ -2,7 +2,9 @@
 
 Mini React Cropper is a versatile image cropping component for React applications. It allows users to select and crop a specific area of an image, providing various customization options such as shape, border type, zooming, and more.
 
-![React Cropper Component](assets/mini-cropper.png)
+<div align="center">
+  <img src="assets/mini-cropper.png" alt="drawing" width="400" alt="mini-react-cropper-preview"/>
+</div>
 
 ## Features
 
@@ -39,7 +41,7 @@ import MiniCropper from 'mini-react-cropper';
 
 const App = () => {
   const handleSubmit = (croppedImage) => {
-    // Handle the cropped image data
+    // Handle the cropped image data base64
     console.log('Cropped Image:', croppedImage);
   };
 
@@ -60,6 +62,11 @@ For detailed usage instructions and available props, please refer to the documen
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request on the GitHub repository.
 
+## Package Information
+
+[![NPM](https://nodei.co/npm/mini-react-cropper.png?compact=true)](https://nodei.co/npm/mini-react-cropper/)
+
+
 ## License
 
-This package is open source and available under the MIT License.
+This package is open source and available under the [MIT License](./LICENSE).
