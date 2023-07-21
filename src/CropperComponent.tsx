@@ -19,6 +19,7 @@ interface MiniCropperProps {
   maxZoom?: number;
   zoomSpeed?: number;
   zoomable?: boolean;
+  processing?: boolean;
   cropSize?: Size;
   classes?: {
     containerClassName?: string;
@@ -55,6 +56,7 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
   maxZoom = 2,
   zoomSpeed = 0.1,
   zoomable = true,
+  processing = false,
   cropSize = { width: 200, height: 200 },
   classes = {
     containerClassName: 'cropper-container',
@@ -135,76 +137,66 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    setIsLoading(true); // Set loading state to true when the image prop changes
-
-    const imageElement = imageRef.current;
-
-    if (imageElement) {
-      const compressImage = (sourceImage: HTMLImageElement, quality: number): Promise<Blob> =>
-        new Promise((resolve) => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-
-          const scaleFactor = Math.min(1, 1000 / Math.max(sourceImage.width, sourceImage.height));
-          const targetWidth = sourceImage.width * scaleFactor;
-          const targetHeight = sourceImage.height * scaleFactor;
-
-          canvas.width = targetWidth;
-          canvas.height = targetHeight;
-
-          ctx?.drawImage(sourceImage, 0, 0, targetWidth, targetHeight);
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                resolve(blob);
-              }
-            },
-            'image/jpeg',
-            quality,
-          );
-        });
-
-      const renderImage = async () => {
-        const quality = calculateImageQuality(imageElement.width, imageElement.height);
-
-        if (quality === 1) {
-          // No compression needed, use the original image
-          onCropAreaChange(image);
-          setCroppedImage(image);
-        } else {
-          // Compress the image
-          const compressedBlob = await compressImage(imageElement, quality);
-          const compressedImageUrl = URL.createObjectURL(compressedBlob);
-
-          onCropAreaChange(compressedImageUrl);
-          setCroppedImage(compressedImageUrl);
-        }
-
-        setIsLoading(false); // Set loading state to false after the image has loaded
-      };
-
-      imageElement.onload = renderImage;
-
-      return () => {
-        imageElement.onload = null; // Cleanup the onload event handler
-      };
-    }
-  }, [image]);
-
   const calculateImageQuality = (width: number, height: number): number => {
     const maxDimension = Math.max(width, height);
     let quality = 1;
 
     if (maxDimension > 1000) {
-      const scaleFactor = maxDimension / 1000;
+      const scaleFactor = maxDimension / (maxDimension / 1.2);
       quality = 1 / scaleFactor;
     }
 
     return quality;
   };
 
+  useEffect(() => {
+    const imageElement = imageRef.current;
+
+    if (imageElement) {
+      const renderImage = (sourceImage: HTMLImageElement, quality: number): Promise<Blob> =>
+        new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
+
+          if (ctx) {
+            const scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
+            const { x, y, width, height } = cropperData;
+
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+
+            ctx.drawImage(
+              imageElement,
+              x * scale,
+              y * scale,
+              width * scale,
+              height * scale,
+              0,
+              0,
+              width * scale,
+              height * scale,
+            );
+          }
+
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          onCropAreaChange(dataUrl);
+          setCroppedImage(dataUrl);
+        });
+
+      const quality = calculateImageQuality(imageElement.width, imageElement.height);
+
+      if (quality === 1) {
+        renderImage(imageElement, 1).then((r) => setIsLoading(false));
+      } else {
+        renderImage(imageElement, quality).then((r) => setIsLoading(false));
+      }
+    }
+    setTimeout(() => setIsLoading(false), 500);
+  }, [cropperData, zoomLevel]);
+
   const handleDragStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (processing) return;
+
     event.preventDefault();
     const initialMouseX = event.clientX;
     const initialMouseY = event.clientY;
@@ -258,6 +250,8 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
   };
 
   const handleResizeStart = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (processing) return;
+
     event.preventDefault();
     event.stopPropagation();
     document.addEventListener('mousemove', handleResizeMove);
@@ -388,12 +382,14 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
         {zoomable && (
           <div className='cropper-zoom-buttons'>
             <button
+              disabled={processing}
               className={classes.buttonZoomInClassName || 'cropper-zoom-button cropper-zoom-in'}
               onClick={handleZoomIn}
             >
               +
             </button>
             <button
+              disabled={processing}
               className={classes.buttonZoomOutClassName || 'cropper-zoom-button cropper-zoom-out'}
               onClick={handleZoomOut}
             >
@@ -403,8 +399,12 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
         )}
       </div>
       <div className='cropper-actions'>
-        <button className={classes.buttonsClassName || 'cropper-action'} onClick={handleSave}>
-          {onSubmitBtnText}
+        <button
+          className={classes.buttonsClassName || 'cropper-action'}
+          onClick={handleSave}
+          disabled={processing}
+        >
+          {processing ? 'Processing...' : onSubmitBtnText}
         </button>
       </div>
     </div>
