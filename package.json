@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "A versatile image cropping component for React applications",
   "main": "index.ts",
+  "types": "types/CropperComponent.d.ts",
+  "module": "src/CropperComponent.js",
   "files": [
     "dist",
     "src",
@@ -24,17 +26,18 @@
   },
   "keywords": [
     "react",
-    "cropper",
+    "react-components",
+    "crop",
     "image",
-    "component"
+    "cropper",
+    "crop-image",
+    "react-cropper",
+    "mini-react-cropper"
   ],
-  "author": "trylogout",
+  "author": "trylogout <trylogout@gmail.com>",
   "license": "MIT",
   "publishConfig": {
     "@trylogout:registry": "https://npm.pkg.github.com"
-  },
-  "bugs": {
-    "url": "https://github.com/trylogout/mini-react-cropper/issues"
   },
   "homepage": "https://github.com/trylogout/mini-react-cropper#readme",
   "dependencies": {
