@@ -2,24 +2,28 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 var tslib_1 = require("tslib");
 var react_1 = tslib_1.__importStar(require("react"));
-var CropperComponent = function (_a) {
-    var image = _a.image, onSubmit = _a.onSubmit, _b = _a.onCropAreaChange, onCropAreaChange = _b === void 0 ? function () { } : _b, _c = _a.onSubmitBtnText, onSubmitBtnText = _c === void 0 ? 'Save' : _c, _d = _a.shape, shape = _d === void 0 ? 'rect' : _d, _e = _a.borderType, borderType = _e === void 0 ? 'dashed' : _e, _f = _a.borderColor, borderColor = _f === void 0 ? '#000' : _f, _g = _a.dotColor, dotColor = _g === void 0 ? borderColor : _g, _h = _a.minZoom, minZoom = _h === void 0 ? 0.5 : _h, _j = _a.maxZoom, maxZoom = _j === void 0 ? 2 : _j, _k = _a.zoomSpeed, zoomSpeed = _k === void 0 ? 0.1 : _k, _l = _a.zoomable, zoomable = _l === void 0 ? true : _l, _m = _a.cropSize, cropSize = _m === void 0 ? { width: 200, height: 200 } : _m, _o = _a.classes, classes = _o === void 0 ? {
+require("./MiniCropperDefaultStyles.scss");
+var MiniCropper = function (_a) {
+    var image = _a.image, onSubmit = _a.onSubmit, _b = _a.onCropAreaChange, onCropAreaChange = _b === void 0 ? function () { } : _b, _c = _a.onSubmitBtnText, onSubmitBtnText = _c === void 0 ? 'Save' : _c, _d = _a.shape, shape = _d === void 0 ? 'rect' : _d, _e = _a.borderType, borderType = _e === void 0 ? 'dashed' : _e, _f = _a.borderColor, borderColor = _f === void 0 ? '#873192' : _f, _g = _a.dotColor, dotColor = _g === void 0 ? '#fff' : _g, _h = _a.minZoom, minZoom = _h === void 0 ? 0.5 : _h, _j = _a.maxZoom, maxZoom = _j === void 0 ? 2 : _j, _k = _a.zoomSpeed, zoomSpeed = _k === void 0 ? 0.1 : _k, _l = _a.zoomable, zoomable = _l === void 0 ? true : _l, _m = _a.processing, processing = _m === void 0 ? false : _m, _o = _a.cropSize, cropSize = _o === void 0 ? { width: 200, height: 200 } : _o, _p = _a.classes, classes = _p === void 0 ? {
         containerClassName: 'cropper-container',
         mediaClassName: 'cropper-media',
         cropAreaClassName: 'cropper-drag-handle',
         buttonsClassName: 'cropper-action',
-    } : _o, _p = _a.objectFit, objectFit = _p === void 0 ? 'contain' : _p;
-    var _q = (0, react_1.useState)({
+        buttonZoomInClassName: 'cropper-zoom-button cropper-zoom-in',
+        buttonZoomOutClassName: 'cropper-zoom-button cropper-zoom-out',
+    } : _p, _q = _a.objectFit, objectFit = _q === void 0 ? 'contain' : _q;
+    var _r = (0, react_1.useState)({
         x: 0,
         y: 0,
         width: cropSize.width,
         height: cropSize.height,
-    }), cropperData = _q[0], setCropperData = _q[1];
-    var _r = (0, react_1.useState)(''), croppedImage = _r[0], setCroppedImage = _r[1];
+    }), cropperData = _r[0], setCropperData = _r[1];
+    var _s = (0, react_1.useState)(''), croppedImage = _s[0], setCroppedImage = _s[1];
+    var _t = (0, react_1.useState)(true), isLoading = _t[0], setIsLoading = _t[1]; // Track image loading state
     var imageRef = (0, react_1.useRef)(null);
     var cropperContainerRef = (0, react_1.useRef)(null);
     var dragHandleRef = (0, react_1.useRef)(null);
-    var _s = (0, react_1.useState)(1), zoomLevel = _s[0], setZoomLevel = _s[1];
+    var _u = (0, react_1.useState)(1), zoomLevel = _u[0], setZoomLevel = _u[1];
     var handleMouseMove = null; // For drag and drop mouse click position control
     var styleOptions = {
         borderRadius: shape === 'rect' ? '0px' : '999px',
@@ -65,24 +69,48 @@ var CropperComponent = function (_a) {
             window.removeEventListener('resize', calculateInitialCropperData);
         };
     }, []);
+    var calculateImageQuality = function (width, height) {
+        var maxDimension = Math.max(width, height);
+        var quality = 1;
+        if (maxDimension > 1000) {
+            var scaleFactor = maxDimension / (maxDimension / 1.2);
+            quality = 1 / scaleFactor;
+        }
+        return quality;
+    };
     (0, react_1.useEffect)(function () {
         var imageElement = imageRef.current;
         if (imageElement) {
-            var canvas = document.createElement('canvas');
-            var ctx = canvas.getContext('2d');
-            if (ctx) {
-                var scale = imageElement.naturalWidth / (imageElement.width * zoomLevel);
-                var x = cropperData.x, y = cropperData.y, width = cropperData.width, height = cropperData.height;
-                canvas.width = width * scale;
-                canvas.height = height * scale;
-                ctx.drawImage(imageElement, x * scale, y * scale, width * scale, height * scale, 0, 0, width * scale, height * scale);
-                var dataUrl = canvas.toDataURL();
-                onCropAreaChange(dataUrl);
-                setCroppedImage(dataUrl);
+            var renderImage = function (sourceImage, quality) {
+                return new Promise(function (resolve) {
+                    var canvas = document.createElement('canvas');
+                    var ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
+                    if (ctx) {
+                        var scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
+                        var x = cropperData.x, y = cropperData.y, width = cropperData.width, height = cropperData.height;
+                        canvas.width = width * scale;
+                        canvas.height = height * scale;
+                        ctx.scale(quality, quality);
+                        ctx.drawImage(imageElement, x * scale, y * scale, width * scale, height * scale, 0, 0, width * scale, height * scale);
+                    }
+                    var dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    onCropAreaChange(dataUrl);
+                    setCroppedImage(dataUrl);
+                });
+            };
+            var quality = calculateImageQuality(imageElement.width, imageElement.height);
+            if (quality === 1) {
+                renderImage(imageElement, 1).then(function (r) { return setIsLoading(false); });
+            }
+            else {
+                renderImage(imageElement, quality).then(function (r) { return setIsLoading(false); });
             }
         }
+        setTimeout(function () { return setIsLoading(false); }, 500);
     }, [cropperData, zoomLevel]);
     var handleDragStart = function (event) {
+        if (processing)
+            return;
         event.preventDefault();
         var initialMouseX = event.clientX;
         var initialMouseY = event.clientY;
@@ -117,6 +145,8 @@ var CropperComponent = function (_a) {
         document.removeEventListener('mouseup', handleDragEnd);
     };
     var handleResizeStart = function (event) {
+        if (processing)
+            return;
         event.preventDefault();
         event.stopPropagation();
         document.addEventListener('mousemove', handleResizeMove);
@@ -150,9 +180,19 @@ var CropperComponent = function (_a) {
         onSubmit(croppedImage);
     };
     return (react_1.default.createElement("div", { className: classes.containerClassName || 'cropper-container', ref: cropperContainerRef },
-        react_1.default.createElement("div", { className: 'cropper-image', style: { position: 'relative', overflow: 'hidden' } },
+        react_1.default.createElement("div", { className: 'cropper-image', style: {
+                position: 'relative',
+                overflow: 'hidden',
+                height: '100%',
+                width: '100%',
+            } },
+            isLoading ? (react_1.default.createElement("div", { className: 'cropper-skeleton-animation', style: {
+                    minWidth: '100%',
+                    minHeight: '400px',
+                    borderRadius: '8px',
+                } })) : null,
             react_1.default.createElement("img", { src: image, alt: 'Crop', ref: imageRef, className: classes.mediaClassName || 'cropper-media', style: {
-                    display: 'block',
+                    display: isLoading ? 'none' : 'block',
                     maxWidth: '100%',
                     maxHeight: '100%',
                     top: 0,
@@ -162,37 +202,38 @@ var CropperComponent = function (_a) {
                     backfaceVisibility: 'hidden',
                     objectFit: "".concat(objectFit),
                 } }),
-            react_1.default.createElement("div", { className: classes.cropAreaClassName || 'cropper-drag-handle', style: {
-                    position: 'absolute',
-                    top: "".concat(cropperData.y, "px"),
-                    left: "".concat(cropperData.x, "px"),
-                    width: "".concat(cropperData.width, "px"),
-                    height: "".concat(cropperData.height, "px"),
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    border: "1px ".concat(borderType, " ").concat(borderColor),
-                    pointerEvents: 'initial',
-                    cursor: 'move',
-                    zIndex: 2,
-                    borderRadius: "".concat(styleOptions.borderRadius),
-                    boxShadow: '0 0 0 1600px rgba(0,0,0,0.65)' /* dark around it */,
-                }, onMouseDown: handleDragStart }),
-            react_1.default.createElement("div", { className: 'cropper-resize-handle', style: {
-                    position: 'absolute',
-                    top: "".concat(styleOptions.top),
-                    left: "".concat(styleOptions.left),
-                    width: '12px',
-                    height: '12px',
-                    cursor: 'nwse-resize',
-                    backgroundColor: "".concat(dotColor),
-                    border: '1px solid #000',
-                    borderRadius: "".concat(styleOptions.borderRadius),
-                    zIndex: 2,
-                }, onMouseDown: handleResizeStart })),
+            isLoading ? null : (react_1.default.createElement(react_1.default.Fragment, null,
+                react_1.default.createElement("div", { className: classes.cropAreaClassName || 'cropper-drag-handle', style: {
+                        position: 'absolute',
+                        top: "".concat(cropperData.y, "px"),
+                        left: "".concat(cropperData.x, "px"),
+                        width: "".concat(cropperData.width, "px"),
+                        height: "".concat(cropperData.height, "px"),
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        border: "1px ".concat(borderType, " ").concat(borderColor),
+                        pointerEvents: 'initial',
+                        cursor: 'move',
+                        zIndex: 2,
+                        borderRadius: "".concat(styleOptions.borderRadius),
+                        boxShadow: '0 0 0 1600px rgba(0,0,0,0.65)' /* dark around it */,
+                    }, onMouseDown: handleDragStart }),
+                react_1.default.createElement("div", { className: 'cropper-resize-handle', style: {
+                        position: 'absolute',
+                        top: "".concat(styleOptions.top),
+                        left: "".concat(styleOptions.left),
+                        width: '12px',
+                        height: '12px',
+                        cursor: 'nwse-resize',
+                        backgroundColor: "".concat(dotColor),
+                        border: '1px solid #000',
+                        borderRadius: "".concat(styleOptions.borderRadius),
+                        zIndex: 2,
+                    }, onMouseDown: handleResizeStart }))),
+            zoomable && (react_1.default.createElement("div", { className: 'cropper-zoom-buttons' },
+                react_1.default.createElement("button", { disabled: processing, className: classes.buttonZoomInClassName || 'cropper-zoom-button cropper-zoom-in', onClick: handleZoomIn }, "+"),
+                react_1.default.createElement("button", { disabled: processing, className: classes.buttonZoomOutClassName || 'cropper-zoom-button cropper-zoom-out', onClick: handleZoomOut }, "-")))),
         react_1.default.createElement("div", { className: 'cropper-actions' },
-            zoomable && (react_1.default.createElement(react_1.default.Fragment, null,
-                react_1.default.createElement("button", { className: classes.buttonsClassName || 'cropper-action', onClick: handleZoomIn }, "Zoom In"),
-                react_1.default.createElement("button", { className: classes.buttonsClassName || 'cropper-action', onClick: handleZoomOut }, "Zoom Out"))),
-            react_1.default.createElement("button", { className: classes.buttonsClassName || 'cropper-action', onClick: handleSave }, onSubmitBtnText))));
+            react_1.default.createElement("button", { className: classes.buttonsClassName || 'cropper-action', onClick: handleSave, disabled: processing }, processing ? 'Processing...' : onSubmitBtnText))));
 };
-exports.default = CropperComponent;
+exports.default = MiniCropper;

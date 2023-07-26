@@ -1,9 +1,10 @@
 import React from 'react';
+import './MiniCropperDefaultStyles.scss';
 type Size = {
     width: number;
     height: number;
 };
-interface CropperProps {
+interface MiniCropperProps {
     image: string;
     onCropAreaChange?: (croppedImage: string) => void;
     onSubmit: (croppedImage: string) => void;
@@ -16,14 +17,17 @@ interface CropperProps {
     maxZoom?: number;
     zoomSpeed?: number;
     zoomable?: boolean;
+    processing?: boolean;
     cropSize?: Size;
     classes?: {
         containerClassName?: string;
         mediaClassName?: string;
         cropAreaClassName?: string;
         buttonsClassName?: string;
+        buttonZoomInClassName?: string;
+        buttonZoomOutClassName?: string;
     };
     objectFit?: '-moz-initial' | 'inherit' | 'initial' | 'revert' | 'revert-layer' | 'unset' | 'contain' | 'cover' | 'fill' | 'none' | 'scale-down';
 }
-declare const CropperComponent: React.FC<CropperProps>;
-export default CropperComponent;
+declare const MiniCropper: React.FC<MiniCropperProps>;
+export default MiniCropper;

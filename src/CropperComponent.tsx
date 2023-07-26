@@ -165,6 +165,8 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
             canvas.width = width * scale;
             canvas.height = height * scale;
 
+            ctx.scale(quality, quality);
+
             ctx.drawImage(
               imageElement,
               x * scale,
