@@ -81,32 +81,33 @@ var MiniCropper = function (_a) {
     (0, react_1.useEffect)(function () {
         var imageElement = imageRef.current;
         if (imageElement) {
-            var renderImage = function (sourceImage, quality) {
-                return new Promise(function (resolve) {
-                    var canvas = document.createElement('canvas');
-                    var ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
-                    if (ctx) {
-                        var scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
-                        var x = cropperData.x, y = cropperData.y, width = cropperData.width, height = cropperData.height;
-                        canvas.width = width * scale;
-                        canvas.height = height * scale;
-                        ctx.scale(quality, quality);
-                        ctx.drawImage(imageElement, x * scale, y * scale, width * scale, height * scale, 0, 0, width * scale, height * scale);
-                    }
-                    var dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    onCropAreaChange(dataUrl);
-                    setCroppedImage(dataUrl);
-                });
+            imageElement.onload = function () {
+                var renderImage = function (sourceImage, quality) {
+                    return new Promise(function (resolve) {
+                        var canvas = document.createElement('canvas');
+                        var ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
+                        if (ctx) {
+                            var scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
+                            var x = cropperData.x, y = cropperData.y, width = cropperData.width, height = cropperData.height;
+                            canvas.width = width * scale;
+                            canvas.height = height * scale;
+                            ctx.drawImage(imageElement, x * scale, y * scale, width * scale, height * scale, 0, 0, width * scale, height * scale);
+                        }
+                        var dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        onCropAreaChange(dataUrl);
+                        setCroppedImage(dataUrl);
+                    });
+                };
+                var quality = calculateImageQuality(imageElement.width, imageElement.height);
+                if (quality === 1) {
+                    renderImage(imageElement, 1).then(function (r) { return setIsLoading(false); });
+                }
+                else {
+                    renderImage(imageElement, quality).then(function (r) { return setIsLoading(false); });
+                }
             };
-            var quality = calculateImageQuality(imageElement.width, imageElement.height);
-            if (quality === 1) {
-                renderImage(imageElement, 1).then(function (r) { return setIsLoading(false); });
-            }
-            else {
-                renderImage(imageElement, quality).then(function (r) { return setIsLoading(false); });
-            }
+            setTimeout(function () { return setIsLoading(false); }, 500);
         }
-        setTimeout(function () { return setIsLoading(false); }, 500);
     }, [cropperData, zoomLevel]);
     var handleDragStart = function (event) {
         if (processing)
