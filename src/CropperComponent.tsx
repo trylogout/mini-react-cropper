@@ -153,47 +153,46 @@ const MiniCropper: React.FC<MiniCropperProps> = ({
     const imageElement = imageRef.current;
 
     if (imageElement) {
-      const renderImage = (sourceImage: HTMLImageElement, quality: number): Promise<Blob> =>
-        new Promise((resolve) => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
+      imageElement.onload = function () {
+        const renderImage = (sourceImage: HTMLImageElement, quality: number): Promise<Blob> =>
+          new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true, desynchronized: true });
 
-          if (ctx) {
-            const scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
-            const { x, y, width, height } = cropperData;
+            if (ctx) {
+              const scale = sourceImage.naturalWidth / (sourceImage.width * zoomLevel);
+              const { x, y, width, height } = cropperData;
+              canvas.width = width * scale;
+              canvas.height = height * scale;
 
-            canvas.width = width * scale;
-            canvas.height = height * scale;
+              ctx.drawImage(
+                imageElement,
+                x * scale,
+                y * scale,
+                width * scale,
+                height * scale,
+                0,
+                0,
+                width * scale,
+                height * scale,
+              );
+            }
 
-            ctx.scale(quality, quality);
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            onCropAreaChange(dataUrl);
+            setCroppedImage(dataUrl);
+          });
 
-            ctx.drawImage(
-              imageElement,
-              x * scale,
-              y * scale,
-              width * scale,
-              height * scale,
-              0,
-              0,
-              width * scale,
-              height * scale,
-            );
-          }
+        const quality = calculateImageQuality(imageElement.width, imageElement.height);
 
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          onCropAreaChange(dataUrl);
-          setCroppedImage(dataUrl);
-        });
-
-      const quality = calculateImageQuality(imageElement.width, imageElement.height);
-
-      if (quality === 1) {
-        renderImage(imageElement, 1).then((r) => setIsLoading(false));
-      } else {
-        renderImage(imageElement, quality).then((r) => setIsLoading(false));
-      }
+        if (quality === 1) {
+          renderImage(imageElement, 1).then((r) => setIsLoading(false));
+        } else {
+          renderImage(imageElement, quality).then((r) => setIsLoading(false));
+        }
+      };
+      setTimeout(() => setIsLoading(false), 500);
     }
-    setTimeout(() => setIsLoading(false), 500);
   }, [cropperData, zoomLevel]);
 
   const handleDragStart = (event: React.MouseEvent<HTMLDivElement>) => {
